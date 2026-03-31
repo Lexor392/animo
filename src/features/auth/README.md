@@ -11,7 +11,7 @@ It is responsible for:
 - logout
 - session persistence integration with Supabase Auth
 - protected route guarding
-- profile bootstrap in the `profiles` table after registration
+- passing registration metadata required for backend profile bootstrap
 
 ## Structure
 
@@ -42,17 +42,9 @@ features/auth/
 
 ### API layer
 
-`auth.api.ts` communicates with Supabase Auth and creates a profile record in `public.profiles` after successful registration.
+`auth.api.ts` communicates only with Supabase Auth.
 
-Expected profile fields:
-
-- `id`
-- `email`
-- `username`
-- `avatar_url`
-- `bio`
-- `created_at`
-- `updated_at`
+Profile creation is expected to happen on the backend through a database trigger or an Edge Function after a new auth user is inserted.
 
 ### Hooks layer
 
@@ -74,5 +66,5 @@ The auth store keeps only global auth state:
 
 - Passwords are never stored outside Supabase Auth.
 - Session persistence is handled by Supabase and synchronized via `AuthProvider`.
-- For larger production setups, profile creation is often moved from the client to a database trigger or an Edge Function for stronger backend guarantees.
+- The recommended setup for this project is a database trigger on `auth.users` that creates a row in `public.profiles`.
 - The current structure is test-friendly because form logic lives in hooks and API communication lives in a dedicated module.

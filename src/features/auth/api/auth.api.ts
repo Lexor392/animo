@@ -3,12 +3,9 @@ import type {
   AuthMutationResult,
   AuthUser,
   LoginCredentials,
-  ProfileInsert,
   RegisterCredentials,
   SupabaseErrorLike,
 } from '@/features/auth/types/auth.types';
-
-const PROFILES_TABLE = 'profiles';
 
 const buildAuthErrorMessage = (error: SupabaseErrorLike | null, fallbackMessage: string): string => {
   if (!error) {
@@ -20,16 +17,6 @@ const buildAuthErrorMessage = (error: SupabaseErrorLike | null, fallbackMessage:
   }
 
   return error.message || fallbackMessage;
-};
-
-const createProfileRecord = async (payload: ProfileInsert): Promise<void> => {
-  const { error } = await supabaseClient.from(PROFILES_TABLE).upsert(payload, {
-    onConflict: 'id',
-  });
-
-  if (error) {
-    throw new Error(buildAuthErrorMessage(error, 'Unable to create the user profile.'));
-  }
 };
 
 export const register = async ({
@@ -56,28 +43,6 @@ export const register = async ({
 
   if (!data.user) {
     throw new Error('Supabase did not return a user after registration.');
-  }
-
-  try {
-    const timestamp = new Date().toISOString();
-
-    // Keep auth and profile bootstrap together until the backend trigger is introduced.
-    await createProfileRecord({
-      id: data.user.id,
-      user_id: data.user.id,
-      username: normalizedUsername,
-      avatar_url: null,
-      banner_url: null,
-      bio: null,
-      created_at: timestamp,
-      updated_at: timestamp,
-    });
-  } catch (profileError) {
-    if (data.session) {
-      await supabaseClient.auth.signOut();
-    }
-
-    throw profileError instanceof Error ? profileError : new Error('Unable to create the user profile.');
   }
 
   return {

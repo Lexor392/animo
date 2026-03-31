@@ -2,13 +2,13 @@ import { NavLink } from 'react-router-dom';
 import { useUiStore } from '@/core/store/uiStore';
 import { Avatar } from '@/shared/ui/Avatar/Avatar';
 import { Button } from '@/shared/ui/Button/Button';
-import { APP_ROUTES, buildCommunityRoute, buildProfileRoute } from '@/shared/constants/app-routes';
+import { APP_ROUTES, buildCommunitiesRoute, buildProfileRoute } from '@/shared/constants/app-routes';
 import { cn } from '@/shared/utils/cn';
 
 const navigationItems = [
   { label: 'Home', to: APP_ROUTES.home },
   { label: 'Profile', to: buildProfileRoute('animo-admin') },
-  { label: 'Community', to: buildCommunityRoute('frontend-lab') },
+  { label: 'Communities', to: buildCommunitiesRoute() },
   { label: 'Chat', to: APP_ROUTES.chat },
   { label: 'Settings', to: APP_ROUTES.settings },
 ];

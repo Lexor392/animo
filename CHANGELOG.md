@@ -1,3 +1,31 @@
+## v0.4.0
+
+### Added
+- Community posts system with post creation, deletion, likes and community feed routing.
+- Post media upload support through the `post-media` storage bucket.
+- Post UI layer with reusable cards, author block, content block, actions, list and skeletons.
+
+### Changed
+- `/community/:slug` now serves as the community feed and `/community/:slug/post/:postId` serves single-post pages.
+- Query key structure was extended for community post feeds and single post caching.
+
+### Fixed
+- Added optimistic like updates and scoped cache updates for community feeds and single post views.
+
+## v0.3.0
+
+### Added
+- Communities core system with community creation, listing, join and leave flows.
+- Community pages, cards, sidebar, create form and join button components built on the feature architecture.
+- Supabase Storage upload support for community icons and banners.
+
+### Changed
+- Extended routing, navigation and query keys to support communities list, detail and creation flows.
+- Prepared the data layer for future community roles, settings and moderation modules.
+
+### Fixed
+- Added join/leave cache invalidation and guards for duplicate joins and owner leave restrictions.
+
 ## v0.2.0
 
 ### Added
