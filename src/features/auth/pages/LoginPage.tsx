@@ -1,0 +1,18 @@
+import { Navigate } from 'react-router-dom';
+import { LoginForm } from '@/features/auth/components/LoginForm/LoginForm';
+import { useAuth } from '@/features/auth/hooks/useAuth';
+import { APP_ROUTES } from '@/shared/constants/app-routes';
+
+export const LoginPage = (): JSX.Element => {
+  const { isAuthenticated, loading } = useAuth();
+
+  if (loading) {
+    return <div className="text-center text-sm font-semibold text-slate-500">Restoring session...</div>;
+  }
+
+  if (isAuthenticated) {
+    return <Navigate replace to={APP_ROUTES.home} />;
+  }
+
+  return <LoginForm />;
+};

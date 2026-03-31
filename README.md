@@ -1,70 +1,139 @@
-# Getting Started with Create React App
+# Animo Frontend Foundation
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Animo is a scalable frontend foundation for a social network platform inspired by community-first products such as Amino. The project is built around a feature-based architecture and prepared for long-term growth, team collaboration and Supabase integration.
 
-## Available Scripts
+## Stack
 
-In the project directory, you can run:
+- React 18
+- TypeScript
+- Vite
+- React Router v6
+- Zustand
+- TanStack React Query
+- TailwindCSS
+- Supabase JavaScript Client
 
-### `npm start`
+## Setup
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+### 1. Install dependencies
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+```bash
+npm install
+```
 
-### `npm test`
+### 2. Create local environment file
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Create `.env` in the project root:
 
-### `npm run build`
+```env
+VITE_SUPABASE_URL=https://your-project-id.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
+```
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### 3. Start development server
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+```bash
+npm run dev
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### 4. Check production build
 
-### `npm run eject`
+```bash
+npm run build
+```
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+## GitHub Pages Deployment
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+The repository includes GitHub Pages preparation via `gh-pages`.
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+The base path is configured through Vite environment loading:
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+- default local build base: `/`
+- GitHub Pages build base: defined in `.env.gh-pages`
 
-## Learn More
+Current GitHub Pages config file:
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+[`.env.gh-pages`](./.env.gh-pages)
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+```env
+VITE_APP_BASE_PATH=/animo/
+```
 
-### Code Splitting
+If your GitHub repository name changes, update this value to match the repository path.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+Deployment flow:
 
-### Analyzing the Bundle Size
+```bash
+npm run build
+npm run deploy
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+Useful scripts:
 
-### Making a Progressive Web App
+- `npm run dev`
+- `npm run build`
+- `npm run build:gh-pages`
+- `npm run preview`
+- `npm run deploy`
+- `npm run typecheck`
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+## Commit Workflow
 
-### Advanced Configuration
+Recommended commit prefixes:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+- `feat:`
+- `fix:`
+- `refactor:`
+- `docs:`
+- `style:`
 
-### Deployment
+Example:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+```text
+feat: add auth foundation
+```
 
-### `npm run build` fails to minify
+## Folder Architecture
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+```text
+src/
+|- core/
+|  |- api/
+|  |- providers/
+|  |- routing/
+|  `- store/
+|- features/
+|  |- auth/
+|  |- profile/
+|  |- communities/
+|  |- posts/
+|  |- chat/
+|  `- notifications/
+|- shared/
+|  |- ui/
+|  |- hooks/
+|  |- utils/
+|  |- types/
+|  `- constants/
+|- pages/
+`- widgets/
+```
+
+Architecture notes:
+
+- `core` contains app-wide infrastructure
+- `features` contains domain business logic
+- `shared` contains reusable primitives and helpers
+- `pages` contain route-level composition
+- `widgets` contain large reusable UI blocks
+
+Detailed documentation:
+
+- [Architecture](./docs/architecture.md)
+- [Contributing](./CONTRIBUTING.md)
+- [Changelog](./CHANGELOG.md)
+- [Current Version](./VERSION.md)
+
+## CI Preparation
+
+The repository already contains a reserved `.github/workflows/` directory so GitHub Actions can be added later without restructuring the repo.
