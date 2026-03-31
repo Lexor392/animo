@@ -26,9 +26,10 @@ export interface AuthMutationResult {
 
 export interface ProfileRow {
   id: string;
-  email: string;
+  user_id: string;
   username: string;
   avatar_url: string | null;
+  banner_url: string | null;
   bio: string | null;
   created_at: string;
   updated_at: string;
@@ -36,18 +37,20 @@ export interface ProfileRow {
 
 export interface ProfileInsert {
   id: string;
-  email: string;
+  user_id: string;
   username: string;
   avatar_url?: string | null;
+  banner_url?: string | null;
   bio?: string | null;
   created_at?: string;
   updated_at?: string;
 }
 
 export interface ProfileUpdate {
-  email?: string;
+  user_id?: string;
   username?: string;
   avatar_url?: string | null;
+  banner_url?: string | null;
   bio?: string | null;
   created_at?: string;
   updated_at?: string;

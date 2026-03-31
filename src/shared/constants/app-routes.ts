@@ -2,6 +2,7 @@ export const APP_ROUTES = {
   login: '/login',
   register: '/register',
   home: '/home',
+  profileEdit: '/profile/edit',
   profile: '/profile/:username',
   community: '/community/:slug',
   chat: '/chat',
@@ -9,4 +10,5 @@ export const APP_ROUTES = {
 } as const;
 
 export const buildProfileRoute = (username: string): string => `/profile/${username}`;
+export const buildEditProfileRoute = (): string => APP_ROUTES.profileEdit;
 export const buildCommunityRoute = (slug: string): string => `/community/${slug}`;

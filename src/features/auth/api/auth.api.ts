@@ -64,9 +64,10 @@ export const register = async ({
     // Keep auth and profile bootstrap together until the backend trigger is introduced.
     await createProfileRecord({
       id: data.user.id,
-      email: normalizedEmail,
+      user_id: data.user.id,
       username: normalizedUsername,
       avatar_url: null,
+      banner_url: null,
       bio: null,
       created_at: timestamp,
       updated_at: timestamp,

@@ -5,10 +5,11 @@ import { MainLayout } from '@/core/routing/layouts/MainLayout/MainLayout';
 import { LoginPage } from '@/features/auth/pages/LoginPage';
 import { RegisterPage } from '@/features/auth/pages/RegisterPage';
 import { ProtectedRoute } from '@/features/auth/components/ProtectedRoute/ProtectedRoute';
+import { EditProfilePage } from '@/features/profile/pages/EditProfilePage';
+import { ProfilePage } from '@/features/profile/pages/ProfilePage';
 import { ChatPage } from '@/pages/ChatPage/ChatPage';
 import { CommunityPage } from '@/pages/CommunityPage/CommunityPage';
 import { HomePage } from '@/pages/HomePage/HomePage';
-import { ProfilePage } from '@/pages/ProfilePage/ProfilePage';
 import { SettingsPage } from '@/pages/SettingsPage/SettingsPage';
 import { APP_ROUTES } from '@/shared/constants/app-routes';
 
@@ -39,6 +40,10 @@ export const router = createBrowserRouter([
           {
             path: APP_ROUTES.home,
             element: <HomePage />,
+          },
+          {
+            path: APP_ROUTES.profileEdit,
+            element: <EditProfilePage />,
           },
           {
             path: APP_ROUTES.profile,
