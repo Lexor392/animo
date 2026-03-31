@@ -28,6 +28,7 @@ export const PostList = ({
         <PostCard
           key={post.id}
           canDelete={post.author_id === currentUserId || communityOwnerId === currentUserId}
+          currentUserId={currentUserId}
           errorMessage={errorMessage}
           isDeleteLoading={deleteLoadingPostId === post.id}
           isLikeLoading={likeLoadingPostId === post.id}

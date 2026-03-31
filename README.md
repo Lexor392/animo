@@ -55,6 +55,8 @@ This script prepares:
 - `communities` and `community_members`
 - `community-icons` and `community-banners` buckets
 - `posts` and `post_likes`
+- `comments` for post discussions
+- `comment_likes` for comment reactions
 - `post-media` bucket and policies
 - row-level security policies for all current core features
 
@@ -131,6 +133,8 @@ src/
 |  |- profile/
 |  |- communities/
 |  |- posts/
+|  |- comments/
+|  |- likes/
 |  |- chat/
 |  `- notifications/
 |- shared/

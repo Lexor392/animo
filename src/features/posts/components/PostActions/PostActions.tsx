@@ -1,3 +1,4 @@
+import { LikeButton } from '@/features/likes/components/LikeButton/LikeButton';
 import { Button } from '@/shared/ui/Button/Button';
 import type { PostActionsProps } from '@/features/posts/components/PostActions/PostActions.types';
 
@@ -15,9 +16,13 @@ export const PostActions = ({
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-3">
-        <Button isLoading={isLikeLoading} size="sm" variant={isLiked ? 'secondary' : 'ghost'} onClick={onToggleLike}>
-          {isLiked ? 'Liked' : 'Like'} {likesCount}
-        </Button>
+        <LikeButton
+          isLiked={isLiked}
+          isLoading={isLikeLoading}
+          likesCount={likesCount}
+          title={`${likesCount} likes on this post`}
+          onClick={onToggleLike}
+        />
 
         <span className="inline-flex h-9 items-center justify-center rounded-2xl bg-slate-100 px-4 text-sm font-semibold text-slate-600">
           Comments {commentsCount}

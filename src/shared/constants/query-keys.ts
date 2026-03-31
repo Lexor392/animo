@@ -1,4 +1,8 @@
 export const QUERY_KEYS = {
+  comments: {
+    all: ['comments'] as const,
+    byPost: (postId: string, viewerId?: string | null) => ['comments', 'post', postId, viewerId ?? 'guest'] as const,
+  },
   communities: {
     all: ['communities'] as const,
     detail: (slug: string, viewerId?: string | null) => ['communities', 'detail', slug, viewerId ?? 'guest'] as const,
@@ -10,7 +14,7 @@ export const QUERY_KEYS = {
     all: ['posts'] as const,
     community: (communityId: string) => ['posts', 'community', communityId] as const,
     feed: (communityId: string, cursor: string | null, viewerId?: string | null) =>
-      ['posts', 'feed', communityId, cursor ?? 'initial', viewerId ?? 'guest'] as const,
+      ['posts', 'community', communityId, 'feed', cursor ?? 'initial', viewerId ?? 'guest'] as const,
     detail: (postId: string, viewerId?: string | null) => ['posts', 'detail', postId, viewerId ?? 'guest'] as const,
   },
   profile: {

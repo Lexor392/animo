@@ -32,6 +32,8 @@ Current features:
 - `profile`
 - `communities`
 - `posts`
+- `comments`
+- `likes`
 - `chat`
 - `notifications`
 

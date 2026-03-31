@@ -1,3 +1,31 @@
+## v0.6.0
+
+### Added
+- Dedicated likes feature with reusable `LikeButton`, post likes and comment likes hooks, API layer and documentation.
+- Comment like support with optimistic UI, counters and viewer-like state in comment hydration.
+- Supabase bootstrap support for `comment_likes` plus server-side triggers that synchronize comment like counters.
+
+### Changed
+- Moved post like toggle logic out of `features/posts` into `features/likes` to keep domain boundaries clean.
+- Reused the same like UI surface across post and comment cards for consistent interaction design.
+
+### Fixed
+- Scoped comment caches by viewer id so optimistic like state stays consistent across authenticated sessions.
+
+## v0.5.0
+
+### Added
+- Comments system for community posts with paginated loading, optimistic create/delete flows and author-owned deletion.
+- Dedicated `features/comments` module with API layer, hooks, UI components and feature documentation.
+- Supabase schema bootstrap for `comments` plus post counter synchronization triggers.
+
+### Changed
+- `PostCard` now embeds the comments surface so discussions are available in both community feeds and single-post pages.
+- Post feed query keys were normalized for reliable cross-feature cache updates.
+
+### Fixed
+- Moved like counter persistence away from client-side `posts` updates to avoid RLS conflicts around `likes_count`.
+
 ## v0.4.0
 
 ### Added

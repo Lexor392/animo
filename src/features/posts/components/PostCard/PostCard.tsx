@@ -1,3 +1,5 @@
+import { CommentForm } from '@/features/comments/components/CommentForm/CommentForm';
+import { CommentList } from '@/features/comments/components/CommentList/CommentList';
 import { Link } from 'react-router-dom';
 import { PostActions } from '@/features/posts/components/PostActions/PostActions';
 import { PostAuthor } from '@/features/posts/components/PostAuthor/PostAuthor';
@@ -7,6 +9,7 @@ import { buildCommunityPostRoute } from '@/shared/constants/app-routes';
 
 export const PostCard = ({
   canDelete,
+  currentUserId,
   errorMessage,
   isDeleteLoading,
   isLikeLoading,
@@ -40,6 +43,13 @@ export const PostCard = ({
           onDelete={() => onDelete(post)}
           onToggleLike={() => onToggleLike(post)}
         />
+      </div>
+
+      <div className="mt-5 border-t border-slate-200 pt-5">
+        {currentUserId ? <CommentForm communityId={post.community_id} currentUserId={currentUserId} postId={post.id} /> : null}
+        <div className={currentUserId ? 'mt-4' : ''}>
+          <CommentList communityId={post.community_id} currentUserId={currentUserId ?? null} postId={post.id} />
+        </div>
       </div>
     </article>
   );

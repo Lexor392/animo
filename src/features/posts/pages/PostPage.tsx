@@ -2,10 +2,10 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { CommunitySidebar } from '@/features/communities/components/CommunitySidebar/CommunitySidebar';
 import { useCommunity } from '@/features/communities/hooks/useCommunity';
+import { useLikePost } from '@/features/likes/hooks/useLikePost';
 import { PostCard } from '@/features/posts/components/PostCard/PostCard';
 import { PostSkeleton } from '@/features/posts/components/PostSkeleton/PostSkeleton';
 import { useDeletePost } from '@/features/posts/hooks/useDeletePost';
-import { useLikePost } from '@/features/posts/hooks/useLikePost';
 import { usePost } from '@/features/posts/hooks/usePost';
 import type { Post } from '@/features/posts/types/post.types';
 import { buildCommunityRoute } from '@/shared/constants/app-routes';
@@ -62,6 +62,7 @@ export const PostPage = (): JSX.Element => {
 
         <PostCard
           canDelete={post.author_id === user.id || community.owner_id === user.id}
+          currentUserId={user.id}
           errorMessage={deleteErrorMessage || likeErrorMessage}
           isDeleteLoading={deleteLoadingPostId === post.id}
           isLikeLoading={likeLoadingPostId === post.id}

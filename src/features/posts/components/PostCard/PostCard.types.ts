@@ -2,6 +2,7 @@ import type { Post } from '@/features/posts/types/post.types';
 
 export interface PostCardProps {
   canDelete: boolean;
+  currentUserId?: string | null;
   errorMessage?: string | null;
   isDeleteLoading: boolean;
   isLikeLoading: boolean;

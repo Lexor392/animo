@@ -2,16 +2,13 @@ import { supabaseClient } from '@/core/api/supabaseClient';
 import type {
   CreatePostDto,
   DeletePostDto,
-  LikePostDto,
   Post,
-  PostActionResponse,
   PostAuthorInfo,
   PostInsert,
   PostLikeRow,
   PostRow,
   PostsQueryParams,
   PostsResponse,
-  UnlikePostDto,
 } from '@/features/posts/types/post.types';
 
 const POSTS_TABLE = 'posts';
@@ -158,29 +155,6 @@ const uploadPostMedia = async (communityId: string, authorId: string, postId: st
   return publicUrl;
 };
 
-const recalculatePostLikesCount = async (postId: string): Promise<number> => {
-  const { count, error: countError } = await supabaseClient
-    .from(POST_LIKES_TABLE)
-    .select('*', {
-      count: 'exact',
-      head: true,
-    })
-    .eq('post_id', postId);
-
-  if (countError) {
-    throw buildPostsError(countError.message || 'Unable to recalculate post likes.');
-  }
-
-  const likesCount = count ?? 0;
-  const { error: updateError } = await supabaseClient.from(POSTS_TABLE).update({ likes_count: likesCount }).eq('id', postId);
-
-  if (updateError) {
-    throw buildPostsError(updateError.message || 'Unable to store the updated likes count.');
-  }
-
-  return likesCount;
-};
-
 const getPostRowById = async (postId: string): Promise<PostRow | null> => {
   const { data, error } = await supabaseClient
     .from(POSTS_TABLE)
@@ -324,59 +298,4 @@ export const deletePost = async ({ currentUserId, postId }: DeletePostDto): Prom
   if (error) {
     throw buildPostsError(error.message || 'Unable to delete the post.');
   }
-};
-
-export const likePost = async ({ currentUserId, postId }: LikePostDto): Promise<PostActionResponse> => {
-  const { data: existingLike, error: existingLikeError } = await supabaseClient
-    .from(POST_LIKES_TABLE)
-    .select('id')
-    .eq('post_id', postId)
-    .eq('user_id', currentUserId)
-    .maybeSingle();
-
-  if (existingLikeError && existingLikeError.code !== 'PGRST116') {
-    throw buildPostsError(existingLikeError.message || 'Unable to validate current like state.');
-  }
-
-  if (existingLike) {
-    throw buildPostsError('You have already liked this post.');
-  }
-
-  const { error } = await supabaseClient.from(POST_LIKES_TABLE).insert({
-    id: crypto.randomUUID(),
-    post_id: postId,
-    user_id: currentUserId,
-  });
-
-  if (error) {
-    throw buildPostsError(error.message || 'Unable to like the post.');
-  }
-
-  const likesCount = await recalculatePostLikesCount(postId);
-
-  return {
-    postId,
-    likesCount,
-    viewerHasLiked: true,
-  };
-};
-
-export const unlikePost = async ({ currentUserId, postId }: UnlikePostDto): Promise<PostActionResponse> => {
-  const { error } = await supabaseClient
-    .from(POST_LIKES_TABLE)
-    .delete()
-    .eq('post_id', postId)
-    .eq('user_id', currentUserId);
-
-  if (error) {
-    throw buildPostsError(error.message || 'Unable to remove the post like.');
-  }
-
-  const likesCount = await recalculatePostLikesCount(postId);
-
-  return {
-    postId,
-    likesCount,
-    viewerHasLiked: false,
-  };
 };

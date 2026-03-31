@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { likePost, unlikePost } from '@/features/posts/api/posts.api';
-import type { LikePostDto, Post, PostActionResponse, PostsResponse, UnlikePostDto } from '@/features/posts/types/post.types';
+import { togglePostLike } from '@/features/likes/api/likes.api';
+import type { ToggleLikeResponse } from '@/features/likes/types/like.types';
+import type { Post, PostsResponse } from '@/features/posts/types/post.types';
 import { QUERY_KEYS } from '@/shared/constants/query-keys';
 
 interface LikeMutationContext {
@@ -22,22 +23,12 @@ const updatePostInFeed = (currentData: PostsResponse | undefined, postId: string
 export const useLikePost = (communityId: string, currentUserId: string) => {
   const queryClient = useQueryClient();
 
-  const toggleMutation = useMutation<PostActionResponse, Error, Post, LikeMutationContext>({
-    mutationFn: async (post) => {
-      if (post.viewer_has_liked) {
-        const payload: UnlikePostDto = {
-          currentUserId,
-          postId: post.id,
-        };
-        return unlikePost(payload);
-      }
-
-      const payload: LikePostDto = {
-        currentUserId,
+  const toggleMutation = useMutation<ToggleLikeResponse, Error, Post, LikeMutationContext>({
+    mutationFn: (post) =>
+      togglePostLike({
         postId: post.id,
-      };
-      return likePost(payload);
-    },
+        userId: currentUserId,
+      }),
     onMutate: async (post) => {
       await Promise.all([
         queryClient.cancelQueries({
@@ -94,14 +85,14 @@ export const useLikePost = (communityId: string, currentUserId: string) => {
           queryKey: QUERY_KEYS.posts.community(communityId),
         },
         (currentData) =>
-          updatePostInFeed(currentData, result.postId, (currentPost) => ({
+          updatePostInFeed(currentData, result.targetId, (currentPost) => ({
             ...currentPost,
             likes_count: result.likesCount,
             viewer_has_liked: result.viewerHasLiked,
           })),
       );
 
-      queryClient.setQueryData<Post | null>(QUERY_KEYS.posts.detail(result.postId, currentUserId), (currentPost) => {
+      queryClient.setQueryData<Post | null>(QUERY_KEYS.posts.detail(result.targetId, currentUserId), (currentPost) => {
         if (!currentPost) {
           return currentPost;
         }

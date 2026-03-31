@@ -6,7 +6,8 @@
 -- 3. Communities and memberships
 -- 4. Community media buckets
 -- 5. Posts and likes
--- 6. Post media bucket
+-- 6. Comments and comment likes
+-- 7. Post media bucket
 
 create extension if not exists "pgcrypto";
 
@@ -323,12 +324,49 @@ create table if not exists public.post_likes (
   unique (post_id, user_id)
 );
 
+alter table public.post_likes add column if not exists created_at timestamptz not null default now();
+
+create or replace function public.sync_post_likes_count()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  target_post_id uuid;
+begin
+  target_post_id := coalesce(new.post_id, old.post_id);
+
+  update public.posts
+  set likes_count = (
+    select count(*)
+    from public.post_likes
+    where post_id = target_post_id
+  )
+  where id = target_post_id;
+
+  return coalesce(new, old);
+end;
+$$;
+
 drop trigger if exists posts_set_updated_at on public.posts;
+drop trigger if exists post_likes_sync_count_after_insert on public.post_likes;
+drop trigger if exists post_likes_sync_count_after_delete on public.post_likes;
 
 create trigger posts_set_updated_at
 before update on public.posts
 for each row
 execute function public.set_updated_at();
+
+create trigger post_likes_sync_count_after_insert
+after insert on public.post_likes
+for each row
+execute function public.sync_post_likes_count();
+
+create trigger post_likes_sync_count_after_delete
+after delete on public.post_likes
+for each row
+execute function public.sync_post_likes_count();
 
 create index if not exists posts_community_created_idx on public.posts (community_id, created_at desc);
 create index if not exists posts_author_id_idx on public.posts (author_id);
@@ -410,6 +448,162 @@ with check (auth.uid() = user_id);
 
 create policy "Users can unlike posts as themselves"
 on public.post_likes
+for delete
+to authenticated
+using (auth.uid() = user_id);
+
+-- ---------------------------------------------------------------------------
+-- Comments
+-- ---------------------------------------------------------------------------
+
+create table if not exists public.comments (
+  id uuid primary key,
+  post_id uuid not null references public.posts(id) on delete cascade,
+  author_id uuid not null references auth.users(id) on delete cascade,
+  content text not null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.comments add column if not exists likes_count integer not null default 0;
+
+create table if not exists public.comment_likes (
+  id uuid primary key,
+  comment_id uuid not null references public.comments(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  unique (comment_id, user_id)
+);
+
+alter table public.comment_likes add column if not exists created_at timestamptz not null default now();
+
+create or replace function public.sync_post_comments_count()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  target_post_id uuid;
+begin
+  target_post_id := coalesce(new.post_id, old.post_id);
+
+  update public.posts
+  set comments_count = (
+    select count(*)
+    from public.comments
+    where post_id = target_post_id
+  )
+  where id = target_post_id;
+
+  return coalesce(new, old);
+end;
+$$;
+
+create or replace function public.sync_comment_likes_count()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  target_comment_id uuid;
+begin
+  target_comment_id := coalesce(new.comment_id, old.comment_id);
+
+  update public.comments
+  set likes_count = (
+    select count(*)
+    from public.comment_likes
+    where comment_id = target_comment_id
+  )
+  where id = target_comment_id;
+
+  return coalesce(new, old);
+end;
+$$;
+
+drop trigger if exists comments_set_updated_at on public.comments;
+drop trigger if exists comments_sync_count_after_insert on public.comments;
+drop trigger if exists comments_sync_count_after_delete on public.comments;
+drop trigger if exists comment_likes_sync_count_after_insert on public.comment_likes;
+drop trigger if exists comment_likes_sync_count_after_delete on public.comment_likes;
+
+create trigger comments_set_updated_at
+before update on public.comments
+for each row
+execute function public.set_updated_at();
+
+create trigger comments_sync_count_after_insert
+after insert on public.comments
+for each row
+execute function public.sync_post_comments_count();
+
+create trigger comments_sync_count_after_delete
+after delete on public.comments
+for each row
+execute function public.sync_post_comments_count();
+
+create trigger comment_likes_sync_count_after_insert
+after insert on public.comment_likes
+for each row
+execute function public.sync_comment_likes_count();
+
+create trigger comment_likes_sync_count_after_delete
+after delete on public.comment_likes
+for each row
+execute function public.sync_comment_likes_count();
+
+create index if not exists comments_post_created_idx on public.comments (post_id, created_at desc);
+create index if not exists comments_author_id_idx on public.comments (author_id);
+create index if not exists comment_likes_comment_id_idx on public.comment_likes (comment_id);
+create index if not exists comment_likes_user_id_idx on public.comment_likes (user_id);
+
+alter table public.comments enable row level security;
+alter table public.comment_likes enable row level security;
+
+drop policy if exists "Comments are viewable by everyone" on public.comments;
+drop policy if exists "Authenticated users can create comments" on public.comments;
+drop policy if exists "Authors can delete their comments" on public.comments;
+drop policy if exists "Comment likes are viewable by everyone" on public.comment_likes;
+drop policy if exists "Users can like comments as themselves" on public.comment_likes;
+drop policy if exists "Users can unlike comments as themselves" on public.comment_likes;
+
+create policy "Comments are viewable by everyone"
+on public.comments
+for select
+to authenticated, anon
+using (true);
+
+create policy "Authenticated users can create comments"
+on public.comments
+for insert
+to authenticated
+with check (
+  auth.uid() = author_id
+  and length(trim(content)) > 0
+  and char_length(content) <= 1000
+);
+
+create policy "Authors can delete their comments"
+on public.comments
+for delete
+to authenticated
+using (auth.uid() = author_id);
+
+create policy "Comment likes are viewable by everyone"
+on public.comment_likes
+for select
+to authenticated, anon
+using (true);
+
+create policy "Users can like comments as themselves"
+on public.comment_likes
+for insert
+to authenticated
+with check (auth.uid() = user_id);
+
+create policy "Users can unlike comments as themselves"
+on public.comment_likes
 for delete
 to authenticated
 using (auth.uid() = user_id);

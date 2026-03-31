@@ -58,19 +58,6 @@ export interface DeletePostDto {
   postId: string;
 }
 
-export interface LikePostDto {
-  currentUserId: string;
-  postId: string;
-}
-
-export interface UnlikePostDto extends LikePostDto {}
-
-export interface PostActionResponse {
-  likesCount: number;
-  postId: string;
-  viewerHasLiked: boolean;
-}
-
 export interface PostPermissionContext {
   communityOwnerId: string;
   currentUserId: string;

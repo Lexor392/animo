@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The posts feature owns the community feed experience: publishing posts, rendering the feed, deleting posts and toggling likes.
+The posts feature owns the community feed experience: publishing posts, rendering the feed, deleting posts, toggling likes and exposing the post surface that the comments feature enhances.
 
 ## Structure
 
@@ -39,6 +39,7 @@ features/posts/
 1. `CommunityFeedPage` loads community shell data through the communities feature
 2. `usePosts` fetches posts ordered by `created_at desc`
 3. `PostList` renders the feed, loading skeletons, empty states and cards
+4. `PostCard` composes likes and comments UI while keeping post mutations inside hooks
 
 ### Create flow
 
@@ -72,7 +73,6 @@ features/posts/
 
 The structure is ready to expand into:
 
-- comments
 - media gallery
 - moderation actions
 - pinned posts

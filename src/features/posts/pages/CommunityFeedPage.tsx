@@ -7,7 +7,7 @@ import { CreatePostForm } from '@/features/posts/components/CreatePostForm/Creat
 import { PostList } from '@/features/posts/components/PostList/PostList';
 import { PostSkeleton } from '@/features/posts/components/PostSkeleton/PostSkeleton';
 import { useDeletePost } from '@/features/posts/hooks/useDeletePost';
-import { useLikePost } from '@/features/posts/hooks/useLikePost';
+import { useLikePost } from '@/features/likes/hooks/useLikePost';
 import { usePosts } from '@/features/posts/hooks/usePosts';
 import type { Post } from '@/features/posts/types/post.types';
 
