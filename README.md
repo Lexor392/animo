@@ -42,6 +42,30 @@ npm run dev
 npm run build
 ```
 
+## Supabase Bootstrap
+
+The project includes a full re-runnable Supabase bootstrap SQL script:
+
+- [`docs/supabase-schema.sql`](./docs/supabase-schema.sql)
+
+This script prepares:
+
+- `profiles` and profile trigger setup
+- `avatars` storage bucket and policies
+- `communities` and `community_members`
+- `community-icons` and `community-banners` buckets
+- `posts` and `post_likes`
+- `post-media` bucket and policies
+- row-level security policies for all current core features
+
+Setup flow:
+
+```bash
+1. Open Supabase SQL Editor
+2. Copy the contents of docs/supabase-schema.sql
+3. Run the script once in your project
+```
+
 ## GitHub Pages Deployment
 
 The repository includes GitHub Pages preparation via `gh-pages`.

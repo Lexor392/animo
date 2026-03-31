@@ -4,6 +4,7 @@
 - Community posts system with post creation, deletion, likes and community feed routing.
 - Post media upload support through the `post-media` storage bucket.
 - Post UI layer with reusable cards, author block, content block, actions, list and skeletons.
+- Full Supabase bootstrap SQL script for profiles, communities, posts, storage buckets and RLS policies.
 
 ### Changed
 - `/community/:slug` now serves as the community feed and `/community/:slug/post/:postId` serves single-post pages.
