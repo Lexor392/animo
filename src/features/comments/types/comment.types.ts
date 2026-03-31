@@ -1,3 +1,5 @@
+import type { Media } from '@/features/media/types/media.types';
+
 export interface CommentAuthorInfo {
   avatar_url: string | null;
   user_id: string;
@@ -11,6 +13,7 @@ export interface Comment {
   created_at: string;
   id: string;
   likes_count: number;
+  media: Media[];
   post_id: string;
   updated_at: string;
   viewer_has_liked: boolean;

@@ -1,15 +1,31 @@
+import { MediaGallery } from '@/features/media/components/MediaGallery/MediaGallery';
+import { MediaType } from '@/features/media/types/media.types';
 import type { PostContentProps } from '@/features/posts/components/PostContent/PostContent.types';
 
 export const PostContent = ({ post }: PostContentProps): JSX.Element => {
+  const fallbackMedia =
+    post.media.length === 0 && post.media_url
+      ? [
+          {
+            id: `${post.id}-fallback-media`,
+            bucket: 'post-media',
+            comment_id: null,
+            created_at: post.created_at,
+            media_type: MediaType.Image,
+            mime_type: 'image/jpeg',
+            owner_id: post.author_id,
+            path: post.media_url,
+            post_id: post.id,
+            public_url: post.media_url,
+            size_bytes: 0,
+          } as const,
+        ]
+      : [];
+
   return (
     <div className="space-y-4">
       <p className="whitespace-pre-wrap text-sm leading-7 text-slate-700">{post.content}</p>
-
-      {post.media_url ? (
-        <div className="overflow-hidden rounded-[1.5rem] border border-slate-200 bg-slate-50">
-          <img alt="Post media" className="max-h-[420px] w-full object-cover" src={post.media_url} />
-        </div>
-      ) : null}
+      <MediaGallery items={post.media.length > 0 ? post.media : fallbackMedia} />
     </div>
   );
 };

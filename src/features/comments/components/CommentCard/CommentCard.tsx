@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import type { CommentCardProps } from '@/features/comments/components/CommentCard/CommentCard.types';
 import { LikeButton } from '@/features/likes/components/LikeButton/LikeButton';
+import { MediaGallery } from '@/features/media/components/MediaGallery/MediaGallery';
 import { buildProfileRoute } from '@/shared/constants/app-routes';
 import { Avatar } from '@/shared/ui/Avatar/Avatar';
 import { Button } from '@/shared/ui/Button/Button';
@@ -54,6 +55,11 @@ export const CommentCard = ({
           </div>
 
           <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-6 text-slate-700">{comment.content}</p>
+          {comment.media.length > 0 ? (
+            <div className="mt-3">
+              <MediaGallery items={comment.media} />
+            </div>
+          ) : null}
           <div className="mt-3 flex flex-wrap items-center gap-3">
             <LikeButton
               isLiked={comment.viewer_has_liked}

@@ -57,7 +57,9 @@ This script prepares:
 - `posts` and `post_likes`
 - `comments` for post discussions
 - `comment_likes` for comment reactions
+- `media_assets` for post and comment attachments
 - `post-media` bucket and policies
+- `comment-media` bucket and policies
 - row-level security policies for all current core features
 
 Setup flow:
@@ -135,6 +137,7 @@ src/
 |  |- posts/
 |  |- comments/
 |  |- likes/
+|  |- media/
 |  |- chat/
 |  `- notifications/
 |- shared/

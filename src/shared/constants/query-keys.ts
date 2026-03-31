@@ -10,6 +10,11 @@ export const QUERY_KEYS = {
       ['communities', 'list', page, search, viewerId ?? 'guest'] as const,
     user: (userId: string) => ['communities', 'user', userId] as const,
   },
+  media: {
+    all: ['media'] as const,
+    byComment: (commentId: string) => ['media', 'comment', commentId] as const,
+    byPost: (postId: string) => ['media', 'post', postId] as const,
+  },
   posts: {
     all: ['posts'] as const,
     community: (communityId: string) => ['posts', 'community', communityId] as const,

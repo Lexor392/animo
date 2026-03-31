@@ -1,4 +1,5 @@
 import { supabaseClient } from '@/core/api/supabaseClient';
+import { getMediaMapByComments } from '@/features/media/api/media.api';
 import type {
   Comment,
   CommentAuthorInfo,
@@ -50,7 +51,11 @@ const getViewerLikedCommentIds = async (commentIds: string[], currentUserId?: st
 const hydrateComments = async (rows: CommentRow[], currentUserId?: string | null): Promise<Comment[]> => {
   const authorIds = Array.from(new Set(rows.map((row) => row.author_id)));
   const commentIds = rows.map((row) => row.id);
-  const [authorProfiles, likedCommentIds] = await Promise.all([getCommentAuthors(authorIds), getViewerLikedCommentIds(commentIds, currentUserId)]);
+  const [authorProfiles, likedCommentIds, mediaMap] = await Promise.all([
+    getCommentAuthors(authorIds),
+    getViewerLikedCommentIds(commentIds, currentUserId),
+    getMediaMapByComments(commentIds),
+  ]);
 
   return rows.map((row) => ({
     id: row.id,
@@ -64,6 +69,7 @@ const hydrateComments = async (rows: CommentRow[], currentUserId?: string | null
     content: row.content,
     created_at: row.created_at,
     likes_count: row.likes_count ?? 0,
+    media: mediaMap.get(row.id) ?? [],
     post_id: row.post_id,
     updated_at: row.updated_at,
     viewer_has_liked: likedCommentIds.has(row.id),

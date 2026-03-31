@@ -1,3 +1,5 @@
+import type { Media } from '@/features/media/types/media.types';
+
 export interface PostAuthorInfo {
   avatar_url: string | null;
   user_id: string;
@@ -13,6 +15,7 @@ export interface Post {
   content: string;
   created_at: string;
   likes_count: number;
+  media: Media[];
   media_url: string | null;
   updated_at: string;
   viewer_has_liked: boolean;
@@ -33,17 +36,14 @@ export interface CreatePostDto {
   authorId: string;
   communityId: string;
   content: string;
-  mediaFile?: File | null;
 }
 
 export interface CreatePostFormValues {
   content: string;
-  mediaFile: File | null;
 }
 
 export interface CreatePostFieldErrors {
   content?: string;
-  mediaFile?: string;
 }
 
 export interface PostsQueryParams {

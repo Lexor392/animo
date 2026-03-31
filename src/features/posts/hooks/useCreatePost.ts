@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import type { ChangeEvent, FormEvent } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useUploadMedia } from '@/features/media/hooks/useUploadMedia';
 import { createPost } from '@/features/posts/api/posts.api';
 import type { CreatePostDto, CreatePostFieldErrors, CreatePostFormValues, Post, PostsResponse } from '@/features/posts/types/post.types';
 import { QUERY_KEYS } from '@/shared/constants/query-keys';
 
 const INITIAL_VALUES: CreatePostFormValues = {
   content: '',
-  mediaFile: null,
 };
 
 const validatePostValues = ({ content }: CreatePostFormValues): CreatePostFieldErrors => {
@@ -30,34 +30,12 @@ export const useCreatePost = (communityId: string, currentUserId: string) => {
   const [fieldErrors, setFieldErrors] = useState<CreatePostFieldErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const mediaUpload = useUploadMedia({
+    type: 'post',
+  });
 
   const createMutation = useMutation<Post, Error, CreatePostDto>({
     mutationFn: createPost,
-    onSuccess: async (createdPost) => {
-      setFormError(null);
-      setSuccessMessage('Post published.');
-      setValues(INITIAL_VALUES);
-
-      queryClient.setQueriesData<PostsResponse | undefined>(
-        {
-          queryKey: QUERY_KEYS.posts.community(communityId),
-        },
-        (currentData) => {
-          if (!currentData) {
-            return currentData;
-          }
-
-          return {
-            ...currentData,
-            items: [createdPost, ...currentData.items],
-          };
-        },
-      );
-
-      await queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.posts.community(communityId),
-      });
-    },
     onError: (error) => {
       setSuccessMessage(null);
       setFormError(error.message);
@@ -77,29 +55,6 @@ export const useCreatePost = (communityId: string, currentUserId: string) => {
     setSuccessMessage(null);
   };
 
-  const updateMedia = (event: ChangeEvent<HTMLInputElement>): void => {
-    const nextFile = event.target.files?.[0] ?? null;
-
-    if (nextFile && !nextFile.type.startsWith('image/')) {
-      setFormError('Only image files are allowed.');
-      setSuccessMessage(null);
-      return;
-    }
-
-    if (nextFile && nextFile.size > 5 * 1024 * 1024) {
-      setFormError('Post image must be 5MB or smaller.');
-      setSuccessMessage(null);
-      return;
-    }
-
-    setValues((currentValues) => ({
-      ...currentValues,
-      mediaFile: nextFile,
-    }));
-    setFormError(null);
-    setSuccessMessage(null);
-  };
-
   const handleSubmit = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault();
 
@@ -112,11 +67,61 @@ export const useCreatePost = (communityId: string, currentUserId: string) => {
       return;
     }
 
-    await createMutation.mutateAsync({
+    const createdPost = await createMutation.mutateAsync({
       authorId: currentUserId,
       communityId,
       content: values.content,
-      mediaFile: values.mediaFile,
+    });
+
+    let nextPost = createdPost;
+    let nextSuccessMessage = 'Post published.';
+
+    if (mediaUpload.items.length > 0) {
+      try {
+        const uploadedItems = await mediaUpload.uploadSelected({
+          entityId: createdPost.id,
+          ownerId: currentUserId,
+        });
+
+        nextPost = {
+          ...createdPost,
+          media: uploadedItems.map((item) => item.media),
+          media_url: uploadedItems[0]?.publicUrl ?? createdPost.media_url,
+        };
+      } catch (error) {
+        nextSuccessMessage = 'Post published, but some media failed to upload.';
+        setFormError(error instanceof Error ? error.message : 'Post was created, but media upload failed.');
+      }
+    }
+
+    if (nextSuccessMessage === 'Post published.') {
+      setFormError(null);
+    }
+
+    setSuccessMessage(nextSuccessMessage);
+    setValues(INITIAL_VALUES);
+    mediaUpload.reset();
+
+    queryClient.setQueriesData<PostsResponse | undefined>(
+      {
+        queryKey: QUERY_KEYS.posts.community(communityId),
+      },
+      (currentData) => {
+        if (!currentData) {
+          return currentData;
+        }
+
+        return {
+          ...currentData,
+          items: [nextPost, ...currentData.items],
+        };
+      },
+    );
+
+    queryClient.setQueryData(QUERY_KEYS.posts.detail(nextPost.id, currentUserId), nextPost);
+
+    await queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.posts.community(communityId),
     });
   };
 
@@ -124,10 +129,10 @@ export const useCreatePost = (communityId: string, currentUserId: string) => {
     fieldErrors,
     formError,
     handleSubmit,
-    isLoading: createMutation.isPending,
+    isLoading: createMutation.isPending || mediaUpload.isUploading,
+    mediaUpload,
     successMessage,
     updateContent,
-    updateMedia,
     values,
   };
 };

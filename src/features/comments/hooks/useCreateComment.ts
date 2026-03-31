@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { ChangeEvent, FormEvent } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { InfiniteData } from '@tanstack/react-query';
+import { useUploadMedia } from '@/features/media/hooks/useUploadMedia';
 import { createComment } from '@/features/comments/api/comments.api';
 import type {
   Comment,
@@ -73,6 +74,9 @@ export const useCreateComment = (postId: string, communityId: string, currentUse
   const [values, setValues] = useState<CreateCommentFormValues>(INITIAL_VALUES);
   const [fieldErrors, setFieldErrors] = useState<CreateCommentFieldErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
+  const mediaUpload = useUploadMedia({
+    type: 'comment',
+  });
 
   const createMutation = useMutation<CreateCommentResponse, Error, CreateCommentDto, CreateCommentMutationContext>({
     mutationFn: createComment,
@@ -113,6 +117,7 @@ export const useCreateComment = (postId: string, communityId: string, currentUse
         post_id: postId,
         updated_at: timestamp,
         likes_count: 0,
+        media: [],
         viewer_has_liked: false,
       };
 
@@ -235,18 +240,54 @@ export const useCreateComment = (postId: string, communityId: string, currentUse
       return;
     }
 
-    await createMutation.mutateAsync({
+    const createdCommentResponse = await createMutation.mutateAsync({
       authorId: currentUserId,
       content: values.content,
       postId,
     });
+
+    let nextComment = createdCommentResponse.comment;
+    let nextFormError: string | null = null;
+
+    if (mediaUpload.items.length > 0) {
+      try {
+        const uploadedItems = await mediaUpload.uploadSelected({
+          entityId: createdCommentResponse.comment.id,
+          ownerId: currentUserId,
+        });
+
+        nextComment = {
+          ...createdCommentResponse.comment,
+          media: uploadedItems.map((item) => item.media),
+        };
+
+        queryClient.setQueryData<InfiniteData<CommentsResponse, string | null>>(QUERY_KEYS.comments.byPost(postId, currentUserId), (currentData) => {
+          if (!currentData) {
+            return currentData;
+          }
+
+          return updateCommentsPages(currentData, (items) => items.map((comment) => (comment.id === nextComment.id ? nextComment : comment)));
+        });
+      } catch (error) {
+        nextFormError = error instanceof Error ? error.message : 'Comment was created, but media upload failed.';
+        await queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.comments.byPost(postId, currentUserId),
+        });
+      }
+    }
+
+    setValues(INITIAL_VALUES);
+    setFormError(nextFormError);
+    setFieldErrors({});
+    mediaUpload.reset();
   };
 
   return {
     fieldErrors,
     formError,
     handleSubmit,
-    isLoading: createMutation.isPending,
+    isLoading: createMutation.isPending || mediaUpload.isUploading,
+    mediaUpload,
     updateContent,
     values,
   };

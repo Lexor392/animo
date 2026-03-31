@@ -1,9 +1,14 @@
+import { MediaUploader } from '@/features/media/components/MediaUploader/MediaUploader';
 import type { CommentFormProps } from '@/features/comments/components/CommentForm/CommentForm.types';
 import { useCreateComment } from '@/features/comments/hooks/useCreateComment';
 import { Button } from '@/shared/ui/Button/Button';
 
 export const CommentForm = ({ communityId, currentUserId, postId }: CommentFormProps): JSX.Element => {
-  const { fieldErrors, formError, handleSubmit, isLoading, updateContent, values } = useCreateComment(postId, communityId, currentUserId);
+  const { fieldErrors, formError, handleSubmit, isLoading, mediaUpload, updateContent, values } = useCreateComment(
+    postId,
+    communityId,
+    currentUserId,
+  );
 
   return (
     <form className="space-y-3" onSubmit={(event) => void handleSubmit(event)}>
@@ -22,6 +27,17 @@ export const CommentForm = ({ communityId, currentUserId, postId }: CommentFormP
           </Button>
         </div>
       </div>
+
+      <MediaUploader
+        errorMessage={mediaUpload.errorMessage}
+        isUploading={mediaUpload.isUploading}
+        items={mediaUpload.items}
+        label="Attach images or videos"
+        maxFiles={5}
+        type="comment"
+        onAddFiles={mediaUpload.addFiles}
+        onRemoveItem={mediaUpload.removeItem}
+      />
 
       {fieldErrors.content ? <p className="text-xs font-medium text-rose-600">{fieldErrors.content}</p> : null}
       {formError ? <p className="text-xs font-medium text-rose-600">{formError}</p> : null}

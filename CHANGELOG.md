@@ -1,3 +1,17 @@
+## v0.7.0
+
+### Added
+- Dedicated media feature with reusable uploader, preview and gallery components for post and comment attachments.
+- Supabase-backed media metadata layer for multi-file post and comment attachments.
+- Comment media bucket support and schema bootstrap for `media_assets`.
+
+### Changed
+- Post and comment creation flows now upload media through the shared media feature instead of embedding file logic inside domain APIs.
+- Post and comment hydration now includes media arrays for gallery rendering.
+
+### Fixed
+- Stabilized local preview lifecycle so blob URLs are released only when items are removed or the form unmounts.
+
 ## v0.6.0
 
 ### Added

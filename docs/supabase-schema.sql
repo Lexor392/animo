@@ -7,7 +7,7 @@
 -- 4. Community media buckets
 -- 5. Posts and likes
 -- 6. Comments and comment likes
--- 7. Post media bucket
+-- 7. Media assets and attachment buckets
 
 create extension if not exists "pgcrypto";
 
@@ -609,16 +609,97 @@ to authenticated
 using (auth.uid() = user_id);
 
 -- ---------------------------------------------------------------------------
--- Post media storage
+-- Media assets
+-- ---------------------------------------------------------------------------
+
+create table if not exists public.media_assets (
+  id uuid primary key,
+  owner_id uuid not null references auth.users(id) on delete cascade,
+  post_id uuid references public.posts(id) on delete cascade,
+  comment_id uuid references public.comments(id) on delete cascade,
+  bucket text not null check (bucket in ('post-media', 'comment-media')),
+  path text not null unique,
+  public_url text not null,
+  media_type text not null check (media_type in ('image', 'video')),
+  mime_type text not null,
+  size_bytes integer not null,
+  created_at timestamptz not null default now(),
+  constraint media_assets_single_owner_target check (
+    (post_id is not null and comment_id is null)
+    or (post_id is null and comment_id is not null)
+  )
+);
+
+create index if not exists media_assets_post_id_idx on public.media_assets (post_id);
+create index if not exists media_assets_comment_id_idx on public.media_assets (comment_id);
+create index if not exists media_assets_owner_id_idx on public.media_assets (owner_id);
+
+alter table public.media_assets enable row level security;
+
+drop policy if exists "Media assets are viewable by everyone" on public.media_assets;
+drop policy if exists "Authors can insert their own media assets" on public.media_assets;
+drop policy if exists "Authors can delete their own media assets" on public.media_assets;
+
+create policy "Media assets are viewable by everyone"
+on public.media_assets
+for select
+to authenticated, anon
+using (true);
+
+create policy "Authors can insert their own media assets"
+on public.media_assets
+for insert
+to authenticated
+with check (
+  auth.uid() = owner_id
+  and (
+    (
+      post_id is not null
+      and comment_id is null
+      and exists (
+        select 1
+        from public.posts p
+        where p.id = post_id
+          and p.author_id = auth.uid()
+      )
+    )
+    or (
+      comment_id is not null
+      and post_id is null
+      and exists (
+        select 1
+        from public.comments c
+        where c.id = comment_id
+          and c.author_id = auth.uid()
+      )
+    )
+  )
+);
+
+create policy "Authors can delete their own media assets"
+on public.media_assets
+for delete
+to authenticated
+using (auth.uid() = owner_id);
+
+-- ---------------------------------------------------------------------------
+-- Attachment storage
 -- ---------------------------------------------------------------------------
 
 insert into storage.buckets (id, name, public)
 values ('post-media', 'post-media', true)
 on conflict (id) do nothing;
 
+insert into storage.buckets (id, name, public)
+values ('comment-media', 'comment-media', true)
+on conflict (id) do nothing;
+
 drop policy if exists "Post media is public" on storage.objects;
 drop policy if exists "Authenticated users can upload post media" on storage.objects;
 drop policy if exists "Authenticated users can update post media" on storage.objects;
+drop policy if exists "Comment media is public" on storage.objects;
+drop policy if exists "Authenticated users can upload comment media" on storage.objects;
+drop policy if exists "Authenticated users can update comment media" on storage.objects;
 
 create policy "Post media is public"
 on storage.objects
@@ -645,5 +726,33 @@ using (
 )
 with check (
   bucket_id = 'post-media'
+  and auth.uid()::text = (storage.foldername(name))[1]
+);
+
+create policy "Comment media is public"
+on storage.objects
+for select
+to public
+using (bucket_id = 'comment-media');
+
+create policy "Authenticated users can upload comment media"
+on storage.objects
+for insert
+to authenticated
+with check (
+  bucket_id = 'comment-media'
+  and auth.uid()::text = (storage.foldername(name))[1]
+);
+
+create policy "Authenticated users can update comment media"
+on storage.objects
+for update
+to authenticated
+using (
+  bucket_id = 'comment-media'
+  and auth.uid()::text = (storage.foldername(name))[1]
+)
+with check (
+  bucket_id = 'comment-media'
   and auth.uid()::text = (storage.foldername(name))[1]
 );

@@ -1,4 +1,5 @@
 import { supabaseClient } from '@/core/api/supabaseClient';
+import { getMediaMapByPosts } from '@/features/media/api/media.api';
 import type {
   CreatePostDto,
   DeletePostDto,
@@ -16,13 +17,9 @@ const POST_LIKES_TABLE = 'post_likes';
 const PROFILES_TABLE = 'profiles';
 const COMMUNITIES_TABLE = 'communities';
 const COMMUNITY_MEMBERS_TABLE = 'community_members';
-const POST_MEDIA_BUCKET = 'post-media';
 const DEFAULT_POSTS_LIMIT = 20;
-const MAX_POST_MEDIA_BYTES = 5 * 1024 * 1024;
 
 const buildPostsError = (message: string): Error => new Error(message);
-
-const sanitizeFileName = (fileName: string): string => fileName.toLowerCase().replace(/[^a-z0-9.-]/g, '-');
 
 const getAuthorProfiles = async (authorIds: string[]): Promise<Map<string, PostAuthorInfo>> => {
   if (authorIds.length === 0) {
@@ -65,9 +62,10 @@ const hydratePosts = async (rows: PostRow[], currentUserId?: string | null): Pro
   const authorIds = Array.from(new Set(rows.map((row) => row.author_id)));
   const postIds = rows.map((row) => row.id);
 
-  const [authorProfiles, likedPostIds] = await Promise.all([
+  const [authorProfiles, likedPostIds, mediaMap] = await Promise.all([
     getAuthorProfiles(authorIds),
     getViewerLikedPostIds(postIds, currentUserId),
+    getMediaMapByPosts(postIds),
   ]);
 
   return rows.map((row) => ({
@@ -84,6 +82,7 @@ const hydratePosts = async (rows: PostRow[], currentUserId?: string | null): Pro
     content: row.content,
     created_at: row.created_at,
     likes_count: row.likes_count ?? 0,
+    media: mediaMap.get(row.id) ?? [],
     media_url: row.media_url,
     updated_at: row.updated_at,
     viewer_has_liked: likedPostIds.has(row.id),
@@ -125,36 +124,6 @@ const ensureCanPostInCommunity = async (communityId: string, authorId: string): 
   }
 };
 
-const uploadPostMedia = async (communityId: string, authorId: string, postId: string, file: File): Promise<string> => {
-  if (!file.type.startsWith('image/')) {
-    throw buildPostsError('Only image files are allowed.');
-  }
-
-  if (file.size > MAX_POST_MEDIA_BYTES) {
-    throw buildPostsError('Post image must be 5MB or smaller.');
-  }
-
-  const fileExtension = file.name.includes('.') ? file.name.split('.').pop()?.toLowerCase() ?? 'png' : 'png';
-  const fileBaseName = file.name.replace(/\.[^.]+$/, '');
-  const filePath = `${authorId}/${communityId}/${postId}/${Date.now()}-${sanitizeFileName(fileBaseName)}.${fileExtension}`;
-
-  const { error } = await supabaseClient.storage.from(POST_MEDIA_BUCKET).upload(filePath, file, {
-    cacheControl: '3600',
-    contentType: file.type,
-    upsert: true,
-  });
-
-  if (error) {
-    throw buildPostsError(error.message || 'Unable to upload post media.');
-  }
-
-  const {
-    data: { publicUrl },
-  } = supabaseClient.storage.from(POST_MEDIA_BUCKET).getPublicUrl(filePath);
-
-  return publicUrl;
-};
-
 const getPostRowById = async (postId: string): Promise<PostRow | null> => {
   const { data, error } = await supabaseClient
     .from(POSTS_TABLE)
@@ -169,15 +138,10 @@ const getPostRowById = async (postId: string): Promise<PostRow | null> => {
   return (data as PostRow | null) ?? null;
 };
 
-export const createPost = async ({ authorId, communityId, content, mediaFile }: CreatePostDto): Promise<Post> => {
+export const createPost = async ({ authorId, communityId, content }: CreatePostDto): Promise<Post> => {
   await ensureCanPostInCommunity(communityId, authorId);
 
   const postId = crypto.randomUUID();
-  let mediaUrl: string | null = null;
-
-  if (mediaFile) {
-    mediaUrl = await uploadPostMedia(communityId, authorId, postId, mediaFile);
-  }
 
   const timestamp = new Date().toISOString();
   const payload: PostInsert = {
@@ -185,7 +149,7 @@ export const createPost = async ({ authorId, communityId, content, mediaFile }: 
     author_id: authorId,
     community_id: communityId,
     content: content.trim(),
-    media_url: mediaUrl,
+    media_url: null,
     created_at: timestamp,
     updated_at: timestamp,
     likes_count: 0,

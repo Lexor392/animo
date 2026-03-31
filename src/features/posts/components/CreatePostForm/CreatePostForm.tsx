@@ -1,27 +1,11 @@
-import { useEffect, useId, useState } from 'react';
+import { MediaUploader } from '@/features/media/components/MediaUploader/MediaUploader';
 import { useCreatePost } from '@/features/posts/hooks/useCreatePost';
 import type { CreatePostFormProps } from '@/features/posts/components/CreatePostForm/CreatePostForm.types';
 import { Button } from '@/shared/ui/Button/Button';
 
 export const CreatePostForm = ({ communityId, currentUserId }: CreatePostFormProps): JSX.Element => {
-  const fileInputId = useId();
-  const { fieldErrors, formError, handleSubmit, isLoading, successMessage, updateContent, updateMedia, values } =
+  const { fieldErrors, formError, handleSubmit, isLoading, mediaUpload, successMessage, updateContent, values } =
     useCreatePost(communityId, currentUserId);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!values.mediaFile) {
-      setPreviewUrl(null);
-      return;
-    }
-
-    const nextPreviewUrl = URL.createObjectURL(values.mediaFile);
-    setPreviewUrl(nextPreviewUrl);
-
-    return () => {
-      URL.revokeObjectURL(nextPreviewUrl);
-    };
-  }, [values.mediaFile]);
 
   return (
     <form className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-soft" noValidate onSubmit={handleSubmit}>
@@ -47,18 +31,15 @@ export const CreatePostForm = ({ communityId, currentUserId }: CreatePostFormPro
       </label>
 
       <div className="mt-5">
-        <input accept="image/*" className="hidden" id={fileInputId} type="file" onChange={updateMedia} />
-        <label htmlFor={fileInputId}>
-          <span className="inline-flex h-11 cursor-pointer items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100">
-            Add image
-          </span>
-        </label>
-
-        {previewUrl ? (
-          <div className="mt-4 overflow-hidden rounded-[1.5rem] border border-slate-200 bg-slate-50">
-            <img alt="Post media preview" className="max-h-[320px] w-full object-cover" src={previewUrl} />
-          </div>
-        ) : null}
+        <MediaUploader
+          errorMessage={mediaUpload.errorMessage}
+          isUploading={mediaUpload.isUploading}
+          items={mediaUpload.items}
+          label="Add images or videos"
+          type="post"
+          onAddFiles={mediaUpload.addFiles}
+          onRemoveItem={mediaUpload.removeItem}
+        />
       </div>
 
       {formError ? (

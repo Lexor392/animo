@@ -34,6 +34,7 @@ Current features:
 - `posts`
 - `comments`
 - `likes`
+- `media`
 - `chat`
 - `notifications`
 
